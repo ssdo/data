@@ -20,7 +20,6 @@ var Config = struct {
 	QueryLimitTimes     int                                                                  // 发送对象限制器时间单位内允许的次数（用户ID）
 	UpdateLimitDuration time.Duration                                                        // 重复发送限制器时间间隔（用户ID+模版编号+参数）
 	UpdateLimitTimes    int                                                                  // 重复发送限制器时间单位内允许的次数（用户ID+模版编号+参数）
-	QuerysFetcher       func(target, channels string) (targetsByChannel map[string][]string) // 获取发送对象
 	IdMaker             func() string                                                        // 用户编号生成器
 }{
 	Redis:               nil,
