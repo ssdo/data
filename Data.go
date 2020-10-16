@@ -259,21 +259,27 @@ func (list *List) QueryByPage(out interface{}, start, num int) bool {
 	return r.Error == nil && r.To(out) == nil
 }
 
-func (list *List) QueryByVersion(out interface{}, version int64) (newVersion int64) {
+func (list *List) QueryByVersion(out interface{}, minVersion, maxVersion uint64) (newVersion uint64) {
 	outValue := reflect.ValueOf(out)
 	if outValue.Kind() != reflect.Ptr || (outValue.Elem().Kind() != reflect.Slice && outValue.Elem().Kind() != reflect.Map) {
-		return version
+		return minVersion
 	}
 
-	rd := Config.Redis.CopyByLogger(list.logger)
-	newVersion = rd.GET("_DATA_VERSION_" + list.data.Table).Int64()
-	if version >= newVersion {
+	if maxVersion == 0 {
+		rd := Config.Redis.CopyByLogger(list.logger)
+		maxVersion = rd.GET("_DATA_VERSION_" + list.data.Table).Uint64()
+		if maxVersion == 0 {
+			db := Config.DB.CopyByLogger(list.logger)
+			maxVersion = uint64(db.Query(fmt.Sprint("SELECT MAX(`", list.data.Version, "`) FROM `", list.data.Table, "`")).IntOnR1C1())
+		}
+	}
+	if minVersion >= maxVersion {
 		// 没有新数据
-		return newVersion
+		return maxVersion
 	}
 
 	sql, args := list.parse("VERSION")
-	args = append(args, version+1, newVersion)
+	args = append(args, minVersion+1, maxVersion)
 	sql = strings.Replace(sql, "`"+list.data.Deleted+"`=0 AND ", "", 1)
 	r := list.db.Query(fmt.Sprint(sql, " AND `", list.data.Version, "` BETWEEN ? AND ?"), args...)
 	ok := false
@@ -287,7 +293,7 @@ func (list *List) QueryByVersion(out interface{}, version int64) (newVersion int
 	}
 
 	if ok {
-		return newVersion
+		return maxVersion
 	}
-	return version
+	return minVersion
 }

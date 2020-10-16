@@ -89,7 +89,7 @@ func TestDataByVersion(t *testing.T) {
 	deletedId := d.Insert(Info2{Type: "A", Name: "111"}, logger)
 
 	list := make([]Info2, 0)
-	version := d.List(logger).Where("`type`='A'").QueryByVersion(&list, 0)
+	version := d.List(logger).Where("`type`='A'").QueryByVersion(&list, 0, 0)
 	if len(list) != 3 || version != 4 || list[0].Deleted == true {
 		t.Fatal("failed to list1", version)
 	}
@@ -97,7 +97,7 @@ func TestDataByVersion(t *testing.T) {
 	// 删除后获取到的数据中 deleted = 0
 	d.Delete(deletedId, logger)
 	list = make([]Info2, 0)
-	version = d.List(logger).Where("`type`='A'").QueryByVersion(&list, version)
+	version = d.List(logger).Where("`type`='A'").QueryByVersion(&list, version, 0)
 	if len(list) != 1 || version != 5 || list[0].Id != deletedId || list[0].Deleted == false {
 		t.Fatal("failed to list2", len(list), version, list[0].Id, deletedId, list[0].Deleted)
 	}
@@ -105,13 +105,13 @@ func TestDataByVersion(t *testing.T) {
 	d.Insert(Info2{Type: "A", Name: "1111"}, logger)
 	d.Insert(Info2{Type: "B", Name: "11111"}, logger)
 	list = make([]Info2, 0)
-	version = d.List(logger).Where("`type`='A'").QueryByVersion(&list, version)
+	version = d.List(logger).Where("`type`='A'").QueryByVersion(&list, version, 0)
 	if len(list) != 1 || version != 7 {
 		t.Fatal("failed to list3", version)
 	}
 
 	listById := make(map[string]Info2)
-	version = d.List(logger).Where("`type`='A'").QueryByVersion(&listById, 0)
+	version = d.List(logger).Where("`type`='A'").QueryByVersion(&listById, 0, 0)
 	if len(listById) != 4 || version != 7 || listById[deletedId].Deleted == false {
 		t.Fatal("failed to list3", len(listById), version)
 	}
