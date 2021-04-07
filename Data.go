@@ -106,8 +106,11 @@ func (data *Data) Insert(in interface{}, logger *log.Logger) string {
 func (data *Data) Update(in interface{}, logger *log.Logger) bool {
 	db := Config.DB.CopyByLogger(logger)
 
-	updateData := make(map[string]interface{})
-	u.Convert(in, updateData)
+	updateData, ok := in.(map[string]interface{})
+	if !ok {
+		updateData = make(map[string]interface{})
+		u.Convert(in, updateData)
+	}
 	id := u.String(updateData[data.Id])
 	if id == "" {
 		return false
